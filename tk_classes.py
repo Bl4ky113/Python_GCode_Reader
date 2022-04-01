@@ -375,3 +375,51 @@ class Canvas ():
         self.change_axis_position("current", self.current)
         self.change_z_position("home", self.z_home)
         self.change_z_position("current", self.z_current)
+
+        self.canvas.create_oval(
+            (self.w * 0.05) - 4, (self.h - (self.h * 0.15)) - 4,
+            (self.w * 0.05) + 4, (self.h - (self.h * 0.15)) + 4,
+            fill=self.current_color,
+            tags="axis"
+        )
+        self.canvas.create_text(
+            (self.w * 0.08), (self.h - (self.h * 0.15)),
+            font=("Libre Mono", int(self.h * 0.03), "bold"),
+            justify="left",
+            anchor="w",
+            text="Current Position",
+            fill=foreground_color,
+            tag="axis"
+        )
+
+        self.canvas.create_oval(
+            (self.w * 0.05) - 4, (self.h - (self.h * 0.10)) - 4,
+            (self.w * 0.05) + 4, (self.h - (self.h * 0.10)) + 4,
+            fill=self.home_color,
+            tags="axis"
+        )
+        self.canvas.create_text(
+            (self.w * 0.08), (self.h - (self.h * 0.10)),
+            font=("Libre Mono", int(self.h * 0.03), "bold"),
+            justify="left",
+            anchor="w",
+            text="Home Position",
+            fill=foreground_color,
+            tag="axis"
+        )
+
+        self.canvas.create_oval(
+            (self.w * 0.05) - 6, (self.h - (self.h * 0.05)) - 6,
+            (self.w * 0.05) + 6, (self.h - (self.h * 0.05)) + 6,
+            fill=self.equal_color,
+            tags="axis"
+        )
+        self.canvas.create_text(
+            (self.w * 0.08), (self.h - (self.h * 0.05)),
+            font=("Libre Mono", int(self.h * 0.03), "bold"),
+            justify="left",
+            anchor="w",
+            text="Home and Current Position Merged",
+            fill=foreground_color,
+            tag="axis"
+        )
