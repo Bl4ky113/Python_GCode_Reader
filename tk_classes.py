@@ -39,6 +39,8 @@ class Base ():
         # Calculate Base's Size
         base_width = int(screen_width * size_width)
         base_height = int(screen_height * size_height)
+        self.width = base_width
+        self.height = base_height
 
         # Calculate Base's
         align_x = int( (screen_width - base_width) / 2)
@@ -73,6 +75,19 @@ class Div ():
             side=pack_options[2]
         )
 
+    def add_border (self):
+        border_color = color_changer(background_color, "444444")
+
+        self.div.configure(
+            highlightbackground=border_color,
+            highlightthickness=2,
+            padx=5,
+            pady=5
+        )
+
+    def hide_div (self):
+        self.div.pack_forget()
+
 class Text ():
     """ Create a Label with Text """
     def __init__ (self, tk_father, content, pack_options=(0, "both", "top")):
@@ -98,6 +113,11 @@ class Text ():
             foreground=new_color
         )
 
+    def change_content (self, text):
+        self.text.configure(
+            content=text
+        )
+
 class Title (Text):
     """ Bigger text labels, for titles & important subjects """
     def __init__ (self, tk_father, content, pack_options=(1, "both", "top")):
@@ -117,6 +137,20 @@ class Bl4ky113 (Text):
         self.change_font_color(font_color)
         self.text.configure(
             font=("Liberation Mono", 18, "bold")
+        )
+
+class Label (Text):
+    """ Text Labels for Information """
+    def __init__ (self, tk_father, content, pack_options=(1, "both", "top")):
+        super().__init__(tk_father, content, pack_options)
+
+        font_color = color_changer(foreground_color, "222222", "-")
+
+        self.change_font_color(font_color)
+        self.text.configure(
+            borderwidth=2,
+            font=("Liberation Mono", 18, "bold"),
+            anchor="w"
         )
 
 class Button ():
@@ -146,12 +180,13 @@ class Button ():
 
 class ListBox ():
     """ Creates a ListBox Input """
-    def __init__ (self, tk_father, list_options, pack_options=()):
+    def __init__ (self, tk_father, list_options, pack_options=(1, "both", "top")):
         self.listbox = tk.Listbox(
             tk_father,
             background=background_color,
             foreground=foreground_color,
             font=("Libre Sans", 16, "bold"),
+            highlightcolor=foreground_color,
             border=0
         )
 
@@ -169,4 +204,152 @@ class ListBox ():
         )
 
     def get_selected_value (self):
-        return self.listbox.get(self.listbox.curselection()[0])
+        try:
+            selected_value = self.listbox.get(self.listbox.curselection()[0])
+            return selected_value
+        except IndexError:
+            return None
+
+class Canvas ():
+    """ Creates a Canvas Element, for drawing the CNC info """
+    def __init__ (self, tk_father, width, height, pack_options="top"):
+        self.w = width
+        self.h = height
+        self.home = (0, 0)
+        self.current = (18, 32)
+        self.z_home = 0
+        self.z_current = 1
+        self.current_color = "#C80000"
+        self.home_color = "#0000C8"
+        self.equal_color = "#700070"
+
+        background_canvas = color_changer(background_color, "222222")
+
+        self.canvas = tk.Canvas(
+            tk_father,
+            background=background_canvas,
+            border=0,
+            width=self.w,
+            height=self.h
+        )
+
+        self.canvas.pack(
+            side=pack_options,
+            padx=10,
+            pady=10
+        )
+
+        self.__create_axis()
+
+    def __create_axis (self):
+        """ Draws and creates an Axis in the Canvas """
+        self.canvas.create_line(
+            (self.w * 0.04), (self.h * 0.05),
+            (self.w - (self.w * 0.2)), (self.h * 0.05),
+            fill=foreground_color,
+            width=4,
+            tag="axis"
+        )
+
+        self.canvas.create_line(
+            (self.w * 0.05), (self.h * 0.04),
+            (self.w * 0.05), (self.h - (self.h * 0.2)),
+            fill=foreground_color,
+            width=4,
+            tag="axis"
+        )
+
+        self.canvas.create_line(
+            (self.w - (self.w * 0.1)), (self.h * 0.04),
+            (self.w - (self.w * 0.1)), (self.h - (self.h * 0.20)),
+            fill=foreground_color,
+            width=4,
+            tag="axis"
+        )
+
+        self.len_x_axis = (self.w - (self.w * 0.2)) - (self.w * 0.05)
+        self.zero_x_axis = (self.w * 0.05, self.h * 0.05)
+
+        self.len_y_axis = (self.h - (self.h * 0.2)) - (self.h * 0.05)
+        self.zero_y_axis = (self.w * 0.05, self.h * 0.05)
+
+        self.len_z_axis = (self.h - (self.h * 0.2)) - (self.h * 0.05)
+        self.zero_z_axis = (self.w - (self.w * 0.1), self.h * 0.05)
+
+    def change_axis_position (self, element="home", coords=(0, 0)):
+        anti_element = "current"
+
+        if element == "current":
+            anti_element = "home"
+
+        color = getattr(self, f"{element}_color")
+
+        self.canvas.delete(element)
+
+        if coords == getattr(self, anti_element):
+            self.canvas.delete(anti_element)
+            self.__draw_axis_position(self.equal_color, 6, coords, element)
+        else:
+            self.__draw_axis_position(color, 4, coords, element)
+
+        if element == "current":
+            self.current = coords
+        elif element == "home":
+            self.home = coords
+
+    def __draw_axis_position (self, color, size=1, cnc_coords=(0, 0), tag=""):
+        canvas_coords = (
+                self.__transform_cnc_value_to_canvas(cnc_coords[0], "x", 0),
+                self.__transform_cnc_value_to_canvas(cnc_coords[1], "y", 1)
+        )
+        
+        self.canvas.create_oval(
+            canvas_coords[0] - size, canvas_coords[1] - size,
+            canvas_coords[0] + size, canvas_coords[1] + size,
+            fill=color,
+            tags=tag
+        )
+
+    def change_z_position (self, element="home", coord=0):
+        anti_element = "current"
+
+        if element == "current":
+            anti_element = "home"
+
+        color = getattr(self, f"{element}_color")
+
+        self.canvas.delete(f"z_{element}")
+
+        if coord == getattr(self, f"z_{anti_element}"):
+            self.canvas.delete(f"z_{element}")
+            self.__draw_z_position(self.equal_color, 6, coord, element)
+        else:
+            self.__draw_z_position(color, 4, coord, element)
+
+    def __draw_z_position (self, color, size=1, cnc_coord=0, tag=""):
+        canvas_coord = self.__transform_cnc_value_to_canvas(cnc_coord, "z", 1)
+
+        self.canvas.create_oval(
+            self.zero_z_axis[0] - size, canvas_coord - size,
+            self.zero_z_axis[0] + size, canvas_coord + size,
+            fill=color,
+            tags=tag
+        )
+
+    def __transform_cnc_value_to_canvas (self, value=0, axis="x", direction_axis=0):
+        div_axis = getattr(self, f"div_{axis}")
+        len_axis = getattr(self, f"zero_{axis}_axis")[direction_axis]
+
+        canvas_value = (value * div_axis) + len_axis
+
+        return canvas_value
+
+    def set_num_axis_divisions (self, x_division, y_division, z_division):
+        self.div_x = self.len_x_axis / x_division
+        self.div_y = self.len_y_axis / y_division
+        self.div_z = self.len_z_axis / z_division
+
+        self.change_axis_position("home", self.home)
+        self.change_axis_position("current", self.current)
+        self.change_z_position("home", self.z_home)
+        self.change_z_position("current", self.z_current)

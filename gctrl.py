@@ -1,6 +1,6 @@
 
 from settings import *
-from menus import MainMenu, SetSerialMenu
+from menus import MainMenu
 
 if __name__ == "__main__":
     main_menu = MainMenu()
