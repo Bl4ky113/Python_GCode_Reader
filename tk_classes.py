@@ -113,9 +113,9 @@ class Text ():
             foreground=new_color
         )
 
-    def change_content (self, text):
+    def change_content (self, new_text):
         self.text.configure(
-            content=text
+            text=new_text
         )
 
 class Title (Text):
@@ -125,6 +125,15 @@ class Title (Text):
 
         self.text.configure(
             font=("Liberation Sans", 32, "bold")
+        )
+
+class SubTitle (Text):
+    """ Bigger Text, but not that much bigger than a title """
+    def __init__ (self, tk_father, content, pack_options=(1, "both", "top")):
+        super().__init__(tk_father, content, pack_options)
+
+        self.text.configure(
+            font=("Liberation Sans", 24, "bold")
         )
 
 class Bl4ky113 (Text):
@@ -149,7 +158,7 @@ class Label (Text):
         self.change_font_color(font_color)
         self.text.configure(
             borderwidth=2,
-            font=("Liberation Mono", 18, "bold"),
+            font=("Liberation Mono", 15, "bold"),
             anchor="w"
         )
 
@@ -185,7 +194,7 @@ class ListBox ():
             tk_father,
             background=background_color,
             foreground=foreground_color,
-            font=("Libre Sans", 16, "bold"),
+            font=("Libre Mono", 14, "bold"),
             highlightcolor=foreground_color,
             border=0
         )
@@ -210,15 +219,23 @@ class ListBox ():
         except IndexError:
             return None
 
+    def add_values (self, values_list):
+        self.listbox.delete(0, "end")
+
+        index_value = 0
+        for value in values_list:
+            self.listbox.insert(index_value, value)
+            index_value += 1
+
 class Canvas ():
     """ Creates a Canvas Element, for drawing the CNC info """
     def __init__ (self, tk_father, width, height, pack_options="top"):
         self.w = width
         self.h = height
         self.home = (0, 0)
-        self.current = (18, 32)
+        self.current = (0, 0)
         self.z_home = 0
-        self.z_current = 1
+        self.z_current = 0
         self.current_color = "#C80000"
         self.home_color = "#0000C8"
         self.equal_color = "#700070"
@@ -321,10 +338,15 @@ class Canvas ():
         self.canvas.delete(f"z_{element}")
 
         if coord == getattr(self, f"z_{anti_element}"):
-            self.canvas.delete(f"z_{element}")
-            self.__draw_z_position(self.equal_color, 6, coord, element)
+            self.canvas.delete(f"z_{anti_element}")
+            self.__draw_z_position(self.equal_color, 6, coord, f"z_{element}")
         else:
-            self.__draw_z_position(color, 4, coord, element)
+            self.__draw_z_position(color, 4, coord, f"z_{element}")
+
+        if element == "current":
+            self.z_current = coord
+        elif element == "home":
+            self.z_home = coord
 
     def __draw_z_position (self, color, size=1, cnc_coord=0, tag=""):
         canvas_coord = self.__transform_cnc_value_to_canvas(cnc_coord, "z", 1)

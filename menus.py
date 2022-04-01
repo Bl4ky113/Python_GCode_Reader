@@ -3,20 +3,8 @@ from tk_classes import *
 from settings import *
 import serial.tools.list_ports as list_serial_ports
 
-def close_menu (callout_function, menu_to_close):
-    callout_function()
-
-    menu_to_close.root.destroy()
-
-
-def start_serial_menu ():
-    serial_menu = SetSerialMenu()
-    serial_menu.change_function("select_serial_port_btn", "btn", 
-            lambda: close_menu(
-                lambda: global_values.config_serial_port(serial_menu.port_list.get_selected_value()),
-                serial_menu.base
-            )
-    )
+def create_sub_menu (SubMenuClass):
+    new_sub_menu = SubMenuClass()
 
 class Menu ():
     def __init__ (self, base_title, size_percentage=(0.5, 0.5), tk_root=False):
@@ -33,6 +21,11 @@ class Menu ():
         element.configure(
             command=new_function
         )
+
+    def close_menu (self, callout_function):
+        callout_function()
+
+        self.base.root.destroy()
 
 class MainMenu (Menu):
     def __init__ (self):
@@ -59,23 +52,29 @@ class MainMenu (Menu):
 
         self.testing_cnc_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "left"))
         axis_btns_wrapper = Div(self.testing_cnc_wrapper.div, (0, "none", "left"))
-        btn_add_y = Button(axis_btns_wrapper.div, lambda: print(), "+Y", ((10, 20), (5, 5), "top"))
-        btn_sub_x = Button(axis_btns_wrapper.div, lambda: print(), "-X", ((15, 20), (5, 5), "left"))
-        btn_add_x = Button(axis_btns_wrapper.div, lambda: print(), "+X", ((10, 20), (5, 5), "right"))
-        btn_sub_y = Button(axis_btns_wrapper.div, lambda: print(), "-Y", ((15, 20), (5, 5), "bottom"))
+        btn_add_y = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("y", (global_values.cnc_step) * 1), "+Y", ((10, 20), (5, 5), "top"))
+        btn_sub_x = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("x", (global_values.cnc_step) * -1), "-X", ((15, 20), (5, 5), "left"))
+        btn_add_x = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("x", (global_values.cnc_step) * 1), "+X", ((10, 20), (5, 5), "right"))
+        btn_sub_y = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("y", (global_values.cnc_step) * -1), "-Y", ((15, 20), (5, 5), "bottom"))
+        self.base.root.bind("<KeyPress-Up>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * 1))
+        self.base.root.bind("<KeyPress-Left>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * -1))
+        self.base.root.bind("<KeyPress-Right>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * 1))
+        self.base.root.bind("<KeyPress-Down>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * -1))
         extra_btns_wrapper = Div(self.testing_cnc_wrapper.div, (0, "none", "right"))
         axis_z_wrapper = Div(extra_btns_wrapper.div, (0, "none", "top"))
-        btn_add_z = Button(axis_z_wrapper.div, lambda: print(), "+Z", ((10, 20), (5, 5), "top"))
-        btn_sub_z = Button(axis_z_wrapper.div, lambda: print(), "-Z", ((15, 20), (5, 5), "top"))
+        btn_add_z = Button(axis_z_wrapper.div, lambda: global_values.check_change_axis("z", (global_values.cnc_step) * 1), "+Z", ((10, 20), (5, 5), "top"))
+        btn_sub_z = Button(axis_z_wrapper.div, lambda: global_values.check_change_axis("z", (global_values.cnc_step) * -1), "-Z", ((15, 20), (5, 5), "top"))
+        self.base.root.bind("<Shift-KeyPress-Up>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * 1))
+        self.base.root.bind("<Shift-KeyPress-Down>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * -1))
         home_btn_wrapper = Div(extra_btns_wrapper.div, (0, "none", "top"))
-        btn_set_home = Button(home_btn_wrapper.div, lambda: print(), "Set Home", ((0, 0), (5, 5), "top"))
+        btn_set_home = Button(home_btn_wrapper.div, lambda: global_values.change_home(), "Set Home", ((0, 0), (5, 5), "top"))
         btn_go_home = Button(home_btn_wrapper.div, lambda: print(), "Go Home", ((5, 0), (5, 5), "top"))
 
         cnc_info_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "right"))
         cnc_info_wrapper.add_border()
         self.label_current_home = Label(cnc_info_wrapper.div, "Home: X: 0; Y: 0; Z: 0;", (0, "x", "top"))
-        cnc_info_canvas = Canvas(cnc_info_wrapper.div, self.base.height * 0.5, self.base.height * 0.5)
-        cnc_info_canvas.set_num_axis_divisions(global_values.cnc_info["len_x"], global_values.cnc_info["len_y"], global_values.cnc_info["len_z"])
+        self.canvas_cnc_info = Canvas(cnc_info_wrapper.div, self.base.height * 0.5, self.base.height * 0.5)
+        self.canvas_cnc_info.set_num_axis_divisions(global_values.cnc_info["len_x"], global_values.cnc_info["len_y"], global_values.cnc_info["len_z"])
         axis_position_wrapper = Div(cnc_info_wrapper.div, (1, "x", "bottom"))
         self.label_x_position = Label(axis_position_wrapper.div, "X: 0;", (1, "x", "left"))
         self.label_y_position = Label(axis_position_wrapper.div, "Y: 0;", (1, "x", "left"))
@@ -83,9 +82,12 @@ class MainMenu (Menu):
 
         serial_info_wrapper = Div(self.main.div, (1, "both", "right"))
         serial_info_wrapper.add_border()
-        serial_info_title = Label(serial_info_wrapper.div, "Serial Info", (0, "x", "top"))
-        serial_info_list = ListBox(serial_info_wrapper.div, (), (1, "both", "top"))
-        self.set_serial_port_btn = Button(serial_info_wrapper.div, start_serial_menu, "Set Serial Port", ((0, 0), (10, 5), "bottom"))
+        serial_info_title = SubTitle(serial_info_wrapper.div, "Serial Info", (0, "x", "top"))
+        self.label_serial_name = Label(serial_info_wrapper.div, "Name: None", (0, "x", "top"))
+        self.label_serial_status = Label(serial_info_wrapper.div, "Status: Closed", (0, "x", "top"))
+        self.label_serial_stream = Label(serial_info_wrapper.div, "Streaming: False", (0, "x", "top"))
+        self.list_serial_info = ListBox(serial_info_wrapper.div, (), (1, "both", "top"))
+        set_serial_port_btn = Button(serial_info_wrapper.div, lambda: create_sub_menu(SetSerialMenu), "Set Serial Port", ((0, 0), (10, 5), "bottom"))
 
     def show_gcode_menu (self):
         try:
@@ -111,6 +113,31 @@ class MainMenu (Menu):
             )
             self.gcode_file_wrapper.hide_div()
 
+    def upload_serial_info (self):
+        self.label_serial_name.change_content(f"Name: {global_values.serial_name}")
+        self.label_serial_status.change_content(f"Status: {global_values.serial_status}")
+        self.label_serial_stream.change_content(f"Streaming: {global_values.serial_streaming}")
+
+        serial_info = []
+        for key, value in global_values.serial_info.items():
+            serial_info.append(f"{key}: {value}")
+
+        self.list_serial_info.add_values(serial_info)
+
+    def upload_cnc_axis (self):
+        self.label_x_position.change_content(f"X: {global_values.axis_info['x']}")
+        self.label_y_position.change_content(f"Y: {global_values.axis_info['y']}")
+        self.label_z_position.change_content(f"Z: {global_values.axis_info['z']}")
+
+        self.canvas_cnc_info.change_axis_position("current", (global_values.axis_info["x"], global_values.axis_info["y"]))
+        self.canvas_cnc_info.change_z_position("current", global_values.axis_info["z"])
+
+    def upload_cnc_home (self):
+        self.label_current_home.change_content(f"Home: X: {global_values.home_info['x']}; Y: {global_values.home_info['y']}; Z: {global_values.home_info['z']};")
+
+        self.canvas_cnc_info.change_axis_position("home", (global_values.home_info["x"], global_values.home_info["y"]))
+        self.canvas_cnc_info.change_z_position("home", global_values.home_info["z"])
+
     def init_menu (self):
         self.base.root.mainloop()
 
@@ -122,7 +149,14 @@ class SetSerialMenu (Menu):
 
         main_title = Title(self.header.div, "Select the Serial Port", (0, "x", "top"))
         self.port_list = ListBox(self.main.div, ports, (1, "both", "top"))
-        self.select_serial_port_btn = Button(self.footer.div, lambda: None, "Use Selected Port", ((10, 5), (20, 10), "right"))
+        self.select_serial_port_btn = Button(
+            self.footer.div,
+            lambda: self.close_menu(
+                lambda: global_values.config_serial_port(self.port_list.get_selected_value())
+            ), 
+            "Use Selected Port", 
+            ((10, 5), (20, 10), "right")
+        )
 
     def get_active_ports (self) -> tuple:
         active_ports = list_serial_ports.comports()
