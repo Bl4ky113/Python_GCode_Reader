@@ -37,17 +37,17 @@ class MainMenu (Menu):
         cnc_wrapper = Div(self.main.div, (1, "both", "left"))
 
         btn_cnc_menus_wrapper = Div(cnc_wrapper.div, (0, "x", "top"))
-        btn_show_testing_menu = Button(btn_cnc_menus_wrapper.div, self.show_testing_menu, "CNC Testing", ((0, 0), (0, 5), "left"))
-        btn_show_gcode_menu = Button(btn_cnc_menus_wrapper.div, self.show_gcode_menu, "G-Code", ((0, 0), (0, 5), "left"))
+        btn_show_testing_menu = Button(btn_cnc_menus_wrapper.div, lambda: self.show_menu("testing_cnc_wrapper", "gcode_file_wrapper", "left"), "CNC Testing", ((0, 0), (0, 5), "left"))
+        btn_show_gcode_menu = Button(btn_cnc_menus_wrapper.div, lambda: self.show_menu("gcode_file_wrapper", "testing_cnc_wrapper", "left"), "G-Code", ((0, 0), (0, 5), "left"))
 
         cnc_menus_wrapper = Div(cnc_wrapper.div, (1, "both", "left"))
         cnc_menus_wrapper.add_border()
 
         self.gcode_file_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "left"))
-        label_name_gcode_file = Label(self.gcode_file_wrapper.div, "None", (0, "x", "top"))
-        self.gcode_viewer = ListBox(self.gcode_file_wrapper.div, (), (1, "both", "top"))
+        self.label_name_gcode_file = Label(self.gcode_file_wrapper.div, "None", (0, "x", "top"))
+        self.list_gcode_viewer = ListBox(self.gcode_file_wrapper.div, (), (1, "both", "top"))
         btn_run_gcode_file = Button(self.gcode_file_wrapper.div, lambda: print(), "Run File", ((15, 5), (0, 2), "right"))
-        btn_load_gcode_file = Button(self.gcode_file_wrapper.div, lambda: print(), "Load File", ((10, 5), (0, 2), "left"))
+        btn_load_gcode_file = Button(self.gcode_file_wrapper.div, global_values.open_gcode_file, "Load File", ((10, 5), (0, 2), "left"))
         self.gcode_file_wrapper.hide_div()
 
         self.testing_cnc_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "left"))
@@ -56,16 +56,16 @@ class MainMenu (Menu):
         btn_sub_x = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("x", (global_values.cnc_step) * -1), "-X", ((15, 20), (5, 5), "left"))
         btn_add_x = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("x", (global_values.cnc_step) * 1), "+X", ((10, 20), (5, 5), "right"))
         btn_sub_y = Button(axis_btns_wrapper.div, lambda: global_values.check_change_axis("y", (global_values.cnc_step) * -1), "-Y", ((15, 20), (5, 5), "bottom"))
-        self.base.root.bind("<KeyPress-Up>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * 1))
-        self.base.root.bind("<KeyPress-Left>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * -1))
-        self.base.root.bind("<KeyPress-Right>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * 1))
-        self.base.root.bind("<KeyPress-Down>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * -1))
+        self.base.root.bind("<KeyPress-k>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * 1))
+        self.base.root.bind("<KeyPress-h>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * -1))
+        self.base.root.bind("<KeyPress-l>", lambda event: global_values.check_change_axis("x", (global_values.cnc_step) * 1))
+        self.base.root.bind("<KeyPress-j>", lambda event: global_values.check_change_axis("y", (global_values.cnc_step) * -1))
         extra_btns_wrapper = Div(self.testing_cnc_wrapper.div, (0, "none", "right"))
         axis_z_wrapper = Div(extra_btns_wrapper.div, (0, "none", "top"))
         btn_add_z = Button(axis_z_wrapper.div, lambda: global_values.check_change_axis("z", (global_values.cnc_step) * 1), "+Z", ((10, 20), (5, 5), "top"))
         btn_sub_z = Button(axis_z_wrapper.div, lambda: global_values.check_change_axis("z", (global_values.cnc_step) * -1), "-Z", ((15, 20), (5, 5), "top"))
-        self.base.root.bind("<Shift-KeyPress-Up>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * 1))
-        self.base.root.bind("<Shift-KeyPress-Down>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * -1))
+        self.base.root.bind("<KeyPress-K>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * 1))
+        self.base.root.bind("<KeyPress-J>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * -1))
         home_btn_wrapper = Div(extra_btns_wrapper.div, (0, "none", "top"))
         btn_set_home = Button(home_btn_wrapper.div, lambda: global_values.change_home(), "Set Home", ((0, 0), (5, 5), "top"))
         btn_go_home = Button(home_btn_wrapper.div, lambda: print(), "Go Home", ((5, 0), (5, 5), "top"))
@@ -80,38 +80,43 @@ class MainMenu (Menu):
         self.label_y_position = Label(axis_position_wrapper.div, "Y: 0;", (1, "x", "left"))
         self.label_z_position = Label(axis_position_wrapper.div, "Z: 0;", (1, "x", "left"))
 
-        serial_info_wrapper = Div(self.main.div, (1, "both", "right"))
-        serial_info_wrapper.add_border()
-        serial_info_title = SubTitle(serial_info_wrapper.div, "Serial Info", (0, "x", "top"))
-        self.label_serial_name = Label(serial_info_wrapper.div, "Name: None", (0, "x", "top"))
-        self.label_serial_status = Label(serial_info_wrapper.div, "Status: Closed", (0, "x", "top"))
-        self.label_serial_stream = Label(serial_info_wrapper.div, "Streaming: False", (0, "x", "top"))
-        self.list_serial_info = ListBox(serial_info_wrapper.div, (), (1, "both", "top"))
-        set_serial_port_btn = Button(serial_info_wrapper.div, lambda: create_sub_menu(SetSerialMenu), "Set Serial Port", ((0, 0), (10, 5), "bottom"))
+        wrapper_serial = Div(self.main.div, (1, "both", "right"))
 
-    def show_gcode_menu (self):
+        wrapper_btns_serial_menus = Div(wrapper_serial.div, (0, "x", "top"))
+        btn_show_info_menu = Button(wrapper_btns_serial_menus.div, lambda: self.show_menu("wrapper_serial_info", "wrapper_serial_output", "right"), "Serial Info", ((0, 0), (0, 5), "left"))
+        btn_show_output_menu = Button(wrapper_btns_serial_menus.div, lambda: self.show_menu("wrapper_serial_output", "wrapper_serial_info", "right"), "Serial Ouput", ((0, 0), (0, 5), "left"))
+
+        wrapper_serial_menus = Div(wrapper_serial.div, (1, "both", "right"))
+        wrapper_serial_menus.add_border()
+
+        self.wrapper_serial_info = Div(wrapper_serial_menus.div, (1, "both", "right"))
+        self.label_serial_name = Label(self.wrapper_serial_info.div, "Name: None", (0, "x", "top"))
+        self.label_serial_status = Label(self.wrapper_serial_info.div, "Status: Closed", (0, "x", "top"))
+        self.label_serial_stream = Label(self.wrapper_serial_info.div, "Streaming: False", (0, "x", "top"))
+        self.list_serial_info = ListBox(self.wrapper_serial_info.div, (), (1, "both", "top"))
+        set_serial_port_btn = Button(self.wrapper_serial_info.div, lambda: create_sub_menu(SetSerialMenu), "Set Serial Port", ((0, 0), (10, 5), "bottom"))
+
+        self.wrapper_serial_output = Div(wrapper_serial_menus.div, (1, "both", "right"))
+        self.list_serial_output = ListBox(self.wrapper_serial_output.div, (), (1, "both", "top"))
+        btn_clear_serial_output = Button(self.wrapper_serial_output.div, self.clear_serial_output, "Clear Output", ((10, 0), (0, 5), "right"))
+        self.wrapper_serial_output.hide_div()
+
+    def show_menu (self, menu_to_show, menu_to_hide, side="left"): 
+        if menu_to_show == "wrapper_serial_output":
+            self.base.root.after(500, global_values.get_serial_output)
+
+        menu_to_show = getattr(self, menu_to_show)
+        menu_to_hide = getattr(self, menu_to_hide)
         try:
-            self.gcode_file_wrapper.div.pack_info()
+            menu_to_show.div.pack_info()
             return
         except:
-            self.gcode_file_wrapper.div.pack(
+            menu_to_show.div.pack(
                 expand=1,
                 fill="both",
-                side="left"
+                side=side
             )
-            self.testing_cnc_wrapper.hide_div()
-
-    def show_testing_menu (self):
-        try:
-            self.testing_cnc_wrapper.div.pack_info()
-            return
-        except:
-            self.testing_cnc_wrapper.div.pack(
-                expand=1,
-                fill="both",
-                side="left"
-            )
-            self.gcode_file_wrapper.hide_div()
+            menu_to_hide.hide_div()
 
     def upload_serial_info (self):
         self.label_serial_name.change_content(f"Name: {global_values.serial_name}")
@@ -123,6 +128,15 @@ class MainMenu (Menu):
             serial_info.append(f"{key}: {value}")
 
         self.list_serial_info.add_values(serial_info)
+
+    def upload_serial_output (self):
+        self.list_serial_output.insert_value(global_values.serial_output[-1])
+        self.base.root.after(500, global_values.get_serial_output)
+
+    def clear_serial_output (self):
+        global_values.clear_serial_output()
+
+        self.list_serial_output.add_values([])
 
     def upload_cnc_axis (self):
         self.label_x_position.change_content(f"X: {global_values.axis_info['x']}")
@@ -137,6 +151,10 @@ class MainMenu (Menu):
 
         self.canvas_cnc_info.change_axis_position("home", (global_values.home_info["x"], global_values.home_info["y"]))
         self.canvas_cnc_info.change_z_position("home", global_values.home_info["z"])
+
+    def upload_gcode_info (self):
+        self.label_name_gcode_file.change_content(global_values.g_code_path)
+        self.list_gcode_viewer.add_values(global_values.g_code)
 
     def init_menu (self):
         self.base.root.mainloop()

@@ -194,7 +194,7 @@ class ListBox ():
             tk_father,
             background=background_color,
             foreground=foreground_color,
-            font=("Libre Mono", 14, "bold"),
+            font=("Libre Mono", 12, "bold"),
             highlightcolor=foreground_color,
             border=0
         )
@@ -226,6 +226,9 @@ class ListBox ():
         for value in values_list:
             self.listbox.insert(index_value, value)
             index_value += 1
+
+    def insert_value (self, new_value):
+        self.listbox.insert("end", new_value)
 
 class Canvas ():
     """ Creates a Canvas Element, for drawing the CNC info """
