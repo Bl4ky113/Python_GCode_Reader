@@ -27,15 +27,15 @@ class GlobalValues ():
         self.cnc_info = {
             "len_x": 40,
             "len_y": 40,
-            "len_z": 4
+            "len_z": 1
         }
         self.cnc_step = 1
 
     def config_serial_port (self, port_name=None):
         self.serial_port.port = port_name
         self.serial_port.baudrate = 9600
-        self.serial_port.timeout = 5.0
-        self.serial_port.write_timeout = 5.0
+        self.serial_port.timeout = 0.25
+        self.serial_port.write_timeout = 0.25
 
         self.serial_info = self.serial_port.get_settings()
         self.serial_name = self.serial_port.name
@@ -46,11 +46,16 @@ class GlobalValues ():
         self.upload_serial_info()
 
     def check_change_axis (self, axis, change):
-        if (self.axis_info[axis] + change) <= self.cnc_info[f"len_{axis}"] and (self.axis_info[axis] + change) >= 0:
-            self.axis_info[axis] += change
-            
-            self.upload_cnc_axis()
-            self.upload_cnc_home()
+        if self.serial_port.is_open:
+            if (self.axis_info[axis] + change) <= self.cnc_info[f"len_{axis}"] and (self.axis_info[axis] + change) >= 0:
+                self.axis_info[axis] += change
+                
+                if self.serial_port.in_waiting <= 0:
+                    write_output = self.axis_info
+                    self.serial_port.write(f"{write_output}".encode("ascii"))
+
+                    self.upload_cnc_axis()
+                    self.upload_cnc_home()
 
     def change_home (self):
         self.home_info = self.axis_info.copy()
@@ -82,12 +87,13 @@ class GlobalValues ():
 
     def get_serial_output (self):
         if self.serial_port.is_open:
-            if self.serial_port.in_waiting > 0:
-                output = self.serial_port.readline().decode("ascii")
-
-                self.serial_output.append(output)
-
+            output = self.serial_port.readline().decode("ascii")
+            
+            if output != "":
+                self.serial_output.append(f"< {output}")
                 self.upload_serial_output()
+
+            self.loop_get_serial_output()
 
     def clear_serial_output (self):
         self.serial_output = []

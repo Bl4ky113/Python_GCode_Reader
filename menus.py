@@ -103,7 +103,7 @@ class MainMenu (Menu):
 
     def show_menu (self, menu_to_show, menu_to_hide, side="left"): 
         if menu_to_show == "wrapper_serial_output":
-            self.base.root.after(500, global_values.get_serial_output)
+            self.loop_get_serial_output()
 
         menu_to_show = getattr(self, menu_to_show)
         menu_to_hide = getattr(self, menu_to_hide)
@@ -131,6 +131,8 @@ class MainMenu (Menu):
 
     def upload_serial_output (self):
         self.list_serial_output.insert_value(global_values.serial_output[-1])
+
+    def loop_get_serial_output (self):
         self.base.root.after(500, global_values.get_serial_output)
 
     def clear_serial_output (self):
