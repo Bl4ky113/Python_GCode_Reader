@@ -7,7 +7,7 @@
 char STEP = MICROSTEP ;
 
 // Servo position for Up and Down 
-const int penZUp = 120;
+const int penZUp = 140;
 const int penZDown = 50;
 
 // Servo on PWM pin 10

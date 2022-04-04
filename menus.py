@@ -66,9 +66,11 @@ class MainMenu (Menu):
         btn_sub_z = Button(axis_z_wrapper.div, lambda: global_values.check_change_axis("z", (global_values.cnc_step) * -1), "-Z", ((15, 20), (5, 5), "top"))
         self.base.root.bind("<KeyPress-K>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * 1))
         self.base.root.bind("<KeyPress-J>", lambda event: global_values.check_change_axis("z", (global_values.cnc_step) * -1))
+        self.base.root.bind("<KeyPress-H>", lambda event: global_values.change_cnc_steps("-"))
+        self.base.root.bind("<KeyPress-L>", lambda event: global_values.change_cnc_steps("+"))
         home_btn_wrapper = Div(extra_btns_wrapper.div, (0, "none", "top"))
-        btn_set_home = Button(home_btn_wrapper.div, lambda: global_values.change_home(), "Set Home", ((0, 0), (5, 5), "top"))
-        btn_go_home = Button(home_btn_wrapper.div, lambda: print(), "Go Home", ((5, 0), (5, 5), "top"))
+        btn_set_home = Button(home_btn_wrapper.div, global_values.change_home, "Set Home", ((0, 0), (5, 5), "top"))
+        btn_go_home = Button(home_btn_wrapper.div,  global_values.go_home, "Go Home", ((5, 0), (5, 5), "top"))
 
         cnc_info_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "right"))
         cnc_info_wrapper.add_border()

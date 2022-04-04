@@ -42,26 +42,59 @@ class GlobalValues ():
         self.serial_status = "Open"
 
         self.serial_port.open()
+        self.serial_port.write("G01 X0 Y0".encode("ascii"))
 
         self.upload_serial_info()
 
     def check_change_axis (self, axis, change):
         if self.serial_port.is_open:
-            if (self.axis_info[axis] + change) <= self.cnc_info[f"len_{axis}"] and (self.axis_info[axis] + change) >= 0:
-                self.axis_info[axis] += change
+            if axis != "z":
+                if (self.axis_info[axis] + change) <= self.cnc_info[f"len_{axis}"] and (self.axis_info[axis] + change) >= 0:
+                    self.axis_info[axis] += change
                 
-                if self.serial_port.in_waiting <= 0:
-                    write_output = self.axis_info
-                    self.serial_port.write(f"{write_output}".encode("ascii"))
+                    if self.serial_port.in_waiting <= 0:
+                        write_output = f"G01 {axis.upper()}{self.axis_info[axis]}\n"
+                        self.serial_port.write(write_output.encode("ascii"))
 
-                    self.upload_cnc_axis()
-                    self.upload_cnc_home()
+                        self.upload_cnc_axis()
+                        self.upload_cnc_home()
+
+            else:
+                if change >= 1 and (self.axis_info[axis] + 1) <= self.cnc_info[f"len_{axis}"]:
+                    servo_status = "50"
+                    self.axis_info[axis] += 1
+                elif change <=0 and (self.axis_info[axis] - 1) >= 0:
+                    servo_status = "30"
+                    self.axis_info[axis] -= 1
+
+                servo_status = "M300 S" + servo_status + "\n"
+                self.serial_port.write(servo_status.encode("ascii"))
+
+                self.upload_cnc_axis()
+                self.upload_cnc_home()
 
     def change_home (self):
         self.home_info = self.axis_info.copy()
 
         self.upload_cnc_axis()
         self.upload_cnc_home()
+
+    def go_home (self):
+        if self.serial_port.is_open:
+            home_output = ""
+
+            if self.home_info["z"] == 0:
+                home_output += "M300 S30\n"
+            else:
+                home_output += "M300 S50\n"
+
+            home_output += f"G01 X{self.home_info['x']} Y{self.home_info['z']}\n"
+
+            self.serial_port.write(home_output.encode("ascii"))
+            self.axis_info = self.home_info.copy()
+
+            self.upload_cnc_axis()
+            self.upload_cnc_home()
 
     def open_gcode_file (self):
         new_gcode = []
@@ -97,6 +130,15 @@ class GlobalValues ():
 
     def clear_serial_output (self):
         self.serial_output = []
+
+    def change_cnc_steps (self, mode="+"):
+        if self.cnc_step > 1 and mode == "-":
+            self.cnc_step -= 1
+        if (self.cnc_step < self.cnc_info["len_x"] or self.cnc_step < self.cnc_info["len_y"]) and mode == "+":
+            self.cnc_step += 1
+
+        print("Current Steps: ", self.cnc_step)
+
 
 global global_values
 global_values = GlobalValues()
