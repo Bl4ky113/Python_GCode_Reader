@@ -2,7 +2,6 @@
 import serial as s
 from tkinter.filedialog import askopenfile
 from os import path
-from time import sleep
 
 class GlobalValues ():
     def __init__ (self):
@@ -42,7 +41,8 @@ class GlobalValues ():
         self.serial_status = "Open"
 
         self.serial_port.open()
-        self.serial_port.write("G01 X0 Y0".encode("ascii"))
+        self.serial_port.write("G01 X0 Y0\n".encode("ascii"))
+        self.serial_port.write("M300 S30\n".encode("ascii"))
 
         self.upload_serial_info()
 
@@ -66,6 +66,8 @@ class GlobalValues ():
                 elif change <=0 and (self.axis_info[axis] - 1) >= 0:
                     servo_status = "30"
                     self.axis_info[axis] -= 1
+                else:
+                    return
 
                 servo_status = "M300 S" + servo_status + "\n"
                 self.serial_port.write(servo_status.encode("ascii"))
@@ -114,9 +116,22 @@ class GlobalValues ():
 
             self.g_code_path = path.basename(gcode_file.name)
 
-        self.g_code = new_gcode
+        self.g_code = tuple(new_gcode)
 
         self.upload_gcode_info()
+
+    def run_gcode_file (self):
+        if len(self.g_code) > 0 and self.serial_port.is_open:
+            line_iterator = 0
+
+            while True:
+                if self.serial_port.in_waiting <= 0:
+                    print(self.g_code[line_iterator])
+                    self.serial_port.write(f"{self.g_code[line_iterator]}".encode("ascii"))
+                    line_iterator += 1
+
+                if (line_iterator + 1) == len(self.g_code):
+                    break
 
     def get_serial_output (self):
         if self.serial_port.is_open:

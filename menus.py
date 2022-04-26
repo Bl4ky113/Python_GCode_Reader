@@ -46,7 +46,7 @@ class MainMenu (Menu):
         self.gcode_file_wrapper = Div(cnc_menus_wrapper.div, (1, "both", "left"))
         self.label_name_gcode_file = Label(self.gcode_file_wrapper.div, "None", (0, "x", "top"))
         self.list_gcode_viewer = ListBox(self.gcode_file_wrapper.div, (), (1, "both", "top"))
-        btn_run_gcode_file = Button(self.gcode_file_wrapper.div, lambda: print(), "Run File", ((15, 5), (0, 2), "right"))
+        btn_run_gcode_file = Button(self.gcode_file_wrapper.div, global_values.run_gcode_file, "Run File", ((15, 5), (0, 2), "right"))
         btn_load_gcode_file = Button(self.gcode_file_wrapper.div, global_values.open_gcode_file, "Load File", ((10, 5), (0, 2), "left"))
         self.gcode_file_wrapper.hide_div()
 
